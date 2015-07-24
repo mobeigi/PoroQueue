@@ -1,7 +1,8 @@
 /*
 * Name: One's Auto Queue
 * Description: Auto Queues for popular league of legends game.
-* Author: One
+* Author: Mohammad Ghasembeigi
+* Email: webmaster@mohammadg.com
 */
 
 //OpenCV
@@ -563,6 +564,9 @@ void clickMain(void) {
   //Keep thread alive indefinitely until program is executed
   int idleCount = 0;
 
+  //Set random number seed
+  srand(time(NULL));
+
   while (true) {
     if (!isActive) {
       Sleep(500);
@@ -951,7 +955,6 @@ void clickMain(void) {
     }
     else if (templateMode[currentStageIndex] == STAGE_SEARCH)
     {
-      ClickTarget(xCord, yCord, tempMat.cols, tempMat.rows, 0, 0); //double click to get rid of text
       ClickTarget(xCord, yCord, tempMat.cols, tempMat.rows, 0, 0);
       TypeInfo(championName);
       SLEEPTIMER = 100;
@@ -1345,8 +1348,31 @@ void breakableSleep(int TIME) {
 
 // Clicks center of matched image
 void ClickTarget(int x, int y, int cols, int rows, int xoffset, int yoffset) {
-  SetCursorPos(x + (cols / 2) + xoffset, y + (rows / 2) + yoffset);
-  mouse_event(MOUSEEVENTF_LEFTDOWN | MOUSEEVENTF_LEFTUP, 0, 0, 0, 0);
+  //X and Y positions to click
+  int xPos = x + (cols / 2) + xoffset;
+  int yPos = y + (rows / 2) + yoffset;
+
+  //Randomise click position
+  //Generate random number between 0 and 10 then subtract 5
+  int x_rand_change = (rand() % 11) - 5;
+  int y_rand_change = (rand() % 11) - 5;
+  xPos += x_rand_change;
+  yPos += y_rand_change;
+
+  POINT win_coords = { xPos, yPos };
+  POINT ctrl_coords = { xPos, yPos };
+
+  HWND clientHandle = FindWindow(NULL, clientName);
+  ScreenToClient(clientHandle, &win_coords);
+  HWND ctrl_handle = ChildWindowFromPoint(clientHandle, win_coords);
+  ScreenToClient(ctrl_handle, &ctrl_coords);
+
+  //Before we click, set foreground window to object we want to click
+  SetForegroundWindowInternal(ctrl_handle);
+
+  LPARAM lParam = MAKELPARAM(ctrl_coords.x, ctrl_coords.y);
+  SendMessage(ctrl_handle, WM_LBUTTONDOWN, MK_LBUTTON, lParam);
+  SendMessage(ctrl_handle, WM_LBUTTONUP, 0, lParam);
 }
 
 
@@ -1459,26 +1485,28 @@ bool saveBitmap(LPCSTR filename, HBITMAP bmp, HPALETTE pal)
 
 
 //Types string to stdout as physical keyboard strokes
-void TypeInfo(string info) {
+void TypeInfo(const string info) {
+
+  breakableSleep(250);
+
   INPUT ip;
   ip.type = INPUT_KEYBOARD;
   ip.ki.time = 0;
-  ip.ki.dwFlags = KEYEVENTF_UNICODE; // Specify the key as a unicode character
   ip.ki.wVk = 0;
   ip.ki.dwExtraInfo = 0;
 
   //Loop through champion name and type it out
-  for (size_t i = 0; i < info.length(); i++) {
+  for (size_t i = 0; i < info.length(); ++i) {
     ip.ki.dwFlags = KEYEVENTF_UNICODE;
     ip.ki.wScan = info[i];
     SendInput(1, &ip, sizeof(INPUT));
 
     //Prepare a keyup event
-    ip.ki.dwFlags = KEYEVENTF_SCANCODE | KEYEVENTF_KEYUP;
+    ip.ki.dwFlags = KEYEVENTF_UNICODE | KEYEVENTF_KEYUP;
     SendInput(1, &ip, sizeof(INPUT));
   }
 
-  return;
+  breakableSleep(250);
 }
 
 //Update tray icon using NIM_MODIFY
