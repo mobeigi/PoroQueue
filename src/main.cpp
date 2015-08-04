@@ -38,6 +38,7 @@
 #include <boost/filesystem.hpp>
 #include <boost/regex.hpp>
 #include <boost/assign.hpp>
+#include <boost/algorithm/string.hpp>
 
 /* Namespaces */
 using namespace std;
@@ -56,7 +57,7 @@ double matchTwoTem(HWND handle, Mat *firstTem, Mat *secondTem, int *targetMatch)
 
 //Program flow
 void clickMain(void); // Main clicking process function, runs in a seperate thread
-void ClickTarget(int x, int y, int cols, int rows, int xoffset, int yoffset); // Clicks center of matched image
+void ClickTarget(HWND hwnd, int x, int y, int cols, int rows, int xoffset, int yoffset); // Clicks center of matched image
 
 // Checking and failsafes
 void resetCycle(void);
@@ -92,7 +93,9 @@ int res_height = 0;
 RECT game_res;
 
 //INI Configuration Variables
-std::string championName;
+std::vector<std::string> championList;
+size_t championListPos = 0;
+
 std::string TextToCall;
 std::string PathToLoLFolder;
 int ClientType = NULL;
@@ -757,7 +760,7 @@ void clickMain(void) {
               addLogEntry(NORMAL_PREFIX, "Clicked accept button.");
             }
 
-            ClickTarget(xCord, yCord, tempMat.cols, tempMat.rows, 0, 0);
+            ClickTarget(handle, xCord, yCord, tempMat.cols, tempMat.rows, 0, 0);
           }
           else if (targetMatch == 2) {  //search button found
             tempMat = searchMat; //set tempmat to search mat and go on to perform actions
@@ -786,11 +789,6 @@ void clickMain(void) {
       //If paused
       if (!isActive)
         continue; //go to next loop
-    }
-    else if (templateMode[currentStageIndex] == STAGE_SEARCH)
-    {
-      //Match single template
-      tolerance = matchTem(handle, &tempMat);
     }
     else if (templateMode[currentStageIndex] == STAGE_CHAMPIONS)
     {
@@ -830,6 +828,9 @@ void clickMain(void) {
         int accept_pos_index = it - templateMode.begin();
         currentStageIndex = accept_pos_index; //look for accept again
 
+        //Reset champ preference
+        championListPos = 0;
+
         //Logging
         if (LoggingEnabled) {
           addLogEntry(NORMAL_PREFIX, "Lockin match failed, another player has dodged. Looking for accept.");
@@ -839,24 +840,41 @@ void clickMain(void) {
         continue;
       }
       else if (targetMatch == 2) { //grey lockin found
-        updateTrayStatus(TIP_PREFIX TIP_DODGING, false);
+        //Someone took our champion
+        //See if we have more preferences
+        ++championListPos;
 
-        //Update index to look for play button again
-        //Find particular stage
-        auto it = std::find(templateMode.begin(), templateMode.end(), STAGE_SERVER_DIALOG);
-        int start_pos_index = it - templateMode.begin();
-        currentStageIndex = start_pos_index;
-
-        //Wait 2 minutes for you to dodge and land on home screen
-
-        //Logging
-        if (LoggingEnabled) {
-          addLogEntry(NORMAL_PREFIX, "Waiting 2 minutes for you to dodge and land on home screen.");
+        if (championListPos < championList.size()) {
+          //We have more champions we can select
+          //Find particular stage
+          auto it = std::find(templateMode.begin(), templateMode.end(), STAGE_SEARCH);
+          int search_pos_index = it - templateMode.begin();
+          currentStageIndex = search_pos_index;
         }
+        //We have to dodge and requeue
+        else {
+          updateTrayStatus(TIP_PREFIX TIP_DODGING, false);
 
-        //Wait 2 minutes for you to dodge and land on home screen
-        SLEEPTIMER = 120000;
-        breakableSleep(SLEEPTIMER);
+          //Update index to look for play button again
+          //Find particular stage
+          auto it = std::find(templateMode.begin(), templateMode.end(), STAGE_SERVER_DIALOG);
+          int start_pos_index = it - templateMode.begin();
+          currentStageIndex = start_pos_index;
+
+          //Reset champ preference
+          championListPos = 0;
+
+          //Wait 2 minutes for you to dodge and land on home screen
+
+          //Logging
+          if (LoggingEnabled) {
+            addLogEntry(NORMAL_PREFIX, "Waiting 2 minutes for you to dodge and land on home screen.");
+          }
+
+          //Wait 2 minutes for you to dodge and land on home screen
+          SLEEPTIMER = 120000;
+          breakableSleep(SLEEPTIMER);
+        }
 
         continue; //go onto next loop
       }
@@ -893,8 +911,8 @@ void clickMain(void) {
         breakableSleep(5000); //sleep just in case we just found button
 
         //Double click it
-        ClickTarget(xCord, yCord, tempMat.cols, tempMat.rows, 0, 0);
-        ClickTarget(xCord, yCord, tempMat.cols, tempMat.rows, 0, 0);
+        ClickTarget(handle, xCord, yCord, tempMat.cols, tempMat.rows, 0, 0);
+        ClickTarget(handle, xCord, yCord, tempMat.cols, tempMat.rows, 0, 0);
 
         system("taskkill /F /T /IM \"WerFault.exe\""); //kill the error message that may appear as lol client is trash
         system("taskkill /F /T /IM \"League of Legends.exe\""); //kill the process, it can sometimes crash on game end so this is needed
@@ -942,34 +960,35 @@ void clickMain(void) {
         templateMode[currentStageIndex] == STAGE_CROSS ||
         templateMode[currentStageIndex] == STAGE_TITTLELESSDIAG)
     {
-      ClickTarget(xCord, yCord, tempMat.cols, tempMat.rows, (tempMat.cols / 2) - 6, 0);
+      ClickTarget(handle, xCord, yCord, tempMat.cols, tempMat.rows, (tempMat.cols / 2) - 6, 0);
     }
     else if (templateMode[currentStageIndex] == STAGE_PLAY)
     {
-      ClickTarget(xCord, yCord, tempMat.cols, tempMat.rows, 0, 0);
+      ClickTarget(handle, xCord, yCord, tempMat.cols, tempMat.rows, 0, 0);
     }
     else if (templateMode[currentStageIndex] == STAGE_SOLOQ)
     {
       SLEEPTIMER = 500;  //don't sleep for long, start looking for accept instantly
-      ClickTarget(xCord, yCord, tempMat.cols, tempMat.rows, 0, 0);
+      ClickTarget(handle, xCord, yCord, tempMat.cols, tempMat.rows, 0, 0);
     }
     else if (templateMode[currentStageIndex] == STAGE_SEARCH)
     {
-      ClickTarget(xCord, yCord, tempMat.cols, tempMat.rows, 0, 0);
-      TypeInfo(championName);
+      ClickTarget(handle, xCord, yCord, tempMat.cols, tempMat.rows, 0, 0);
+      std::string callText = "^^^" + championList[championListPos] + "$";
+      TypeInfo(callText);
       SLEEPTIMER = 100;
     }
     else if (templateMode[currentStageIndex] == STAGE_CHAMPIONS)
     {
-      ClickTarget(xCord, yCord, tempMat.cols, tempMat.rows, 0, tempMat.rows);
-      SLEEPTIMER = 3000;
+      ClickTarget(handle, xCord, yCord, tempMat.cols, tempMat.rows, 0, tempMat.rows);
+      SLEEPTIMER = 1500;
     }
     else if (templateMode[currentStageIndex] == STAGE_SEND)
     {
       if (TextToCall.length() > 0) {
-        ClickTarget(xCord, yCord, tempMat.cols, tempMat.rows, -tempMat.cols, 0);
+        ClickTarget(handle, xCord, yCord, tempMat.cols, tempMat.rows, -tempMat.cols, 0);
         TypeInfo(TextToCall);
-        ClickTarget(xCord, yCord, tempMat.cols, tempMat.rows, 0, 0);
+        ClickTarget(handle, xCord, yCord, tempMat.cols, tempMat.rows, 0, 0);
       }
       SLEEPTIMER = 1000;
     }
@@ -990,12 +1009,12 @@ void clickMain(void) {
     }
     else if (templateMode[currentStageIndex] == STAGE_HOME)
     {
-      ClickTarget(xCord, yCord, tempMat.cols, tempMat.rows, 0, 0);
+      ClickTarget(handle, xCord, yCord, tempMat.cols, tempMat.rows, 0, 0);
       SLEEPTIMER = 3000; //wait for honor/other notifications to popup after click
     }
     else
     {
-      ClickTarget(xCord, yCord, tempMat.cols, tempMat.rows, 0, 0); //click center of match
+      ClickTarget(handle, xCord, yCord, tempMat.cols, tempMat.rows, 0, 0); //click center of match
     }
 
 
@@ -1012,6 +1031,9 @@ void clickMain(void) {
 
     //Reset Cycle on end
     if (currentStageIndex == templateMode.size()) {
+
+      //Reset champ preference
+      championListPos = 0;
 
       //Find particular stage
       auto it = std::find(templateMode.begin(), templateMode.end(), STAGE_SERVER_DIALOG);
@@ -1346,8 +1368,8 @@ void breakableSleep(int TIME) {
   }
 }
 
-// Clicks center of matched image
-void ClickTarget(int x, int y, int cols, int rows, int xoffset, int yoffset) {
+// Clicks target
+void ClickTarget(HWND hwnd, int x, int y, int cols, int rows, int xoffset, int yoffset) {
   //X and Y positions to click
   int xPos = x + (cols / 2) + xoffset;
   int yPos = y + (rows / 2) + yoffset;
@@ -1362,9 +1384,8 @@ void ClickTarget(int x, int y, int cols, int rows, int xoffset, int yoffset) {
   POINT win_coords = { xPos, yPos };
   POINT ctrl_coords = { xPos, yPos };
 
-  HWND clientHandle = FindWindow(NULL, clientName);
-  ScreenToClient(clientHandle, &win_coords);
-  HWND ctrl_handle = ChildWindowFromPoint(clientHandle, win_coords);
+  ScreenToClient(hwnd, &win_coords);
+  HWND ctrl_handle = hwnd;
   ScreenToClient(ctrl_handle, &ctrl_coords);
 
   //Before we click, set foreground window to object we want to click
@@ -1373,6 +1394,7 @@ void ClickTarget(int x, int y, int cols, int rows, int xoffset, int yoffset) {
   LPARAM lParam = MAKELPARAM(ctrl_coords.x, ctrl_coords.y);
   SendMessage(ctrl_handle, WM_LBUTTONDOWN, MK_LBUTTON, lParam);
   SendMessage(ctrl_handle, WM_LBUTTONUP, 0, lParam);
+
 }
 
 
@@ -1544,7 +1566,11 @@ void readSettings(void) {
     //Read ini file and get required values
     read_ini(SETTINGS_FILE, pt);
 
-    championName = "^" + pt.get<std::string>("CHAMPION.Name") + "$";
+    //Read champion name
+    std::string champNameString = pt.get<std::string>("CHAMPION.Name");
+    std::vector<std::string> words;
+    boost::split(championList, champNameString, boost::is_any_of(","), boost::token_compress_on);
+
     TextToCall = pt.get<std::string>("QUEUE.TextToCall");
     Type = atoi(pt.get<std::string>("QUEUE.Type").c_str());
     Difficulty = atoi(pt.get<std::string>("QUEUE.Difficulty").c_str());
@@ -1570,20 +1596,40 @@ void readSettings(void) {
       std::string dir;
       std::string exeloc;
 
-      //Try looking in multiple spots for RADS dir
-      std::vector<std::string> v = boost::assign::list_of
-        ("Software\\Riot Games\\RADS\\")
+      //Try looking in multiple registry locations for RADS dir
+      std::vector<std::string> HKCR = boost::assign::list_of
         ("VirtualStore\\MACHINE\\SOFTWARE\\Wow6432Node\\Riot Games\\RADS\\")
-        ("SOFTWARE\\Wow6432Node\\Riot Games\\RADS\\");
+        ;
 
-      bool status = false;
+      std::vector<std::string> HKCU = boost::assign::list_of
+        ("VirtualStore\\MACHINE\\SOFTWARE\\Wow6432Node\\Riot Games\\RADS\\")
+        ("Software\\Riot Games\\RADS\\")
+        ;
 
-      for (std::vector<std::string>::iterator it = v.begin(); it != v.end() && !status; ++it) {
-        status = getLoLRadsDir(HKEY_CURRENT_USER, *it, dir);
+      std::vector<std::string> HKLM = boost::assign::list_of
+        ("SOFTWARE\\Classes\\VirtualStore\\MACHINE\\SOFTWARE\\Wow6432Node\\Riot Games\\RADS\\")
+        ("SOFTWARE\\Wow6432Node\\Riot Games\\RADS\\")
+        ;
+
+      bool isFound = false;
+
+      //HKEY_CLASSES_ROOT
+      for (std::vector<std::string>::iterator it = HKCU.begin(); it != HKCU.end() && !isFound; ++it) {
+        isFound = getLoLRadsDir(HKEY_CLASSES_ROOT, *it, dir);
+      }
+      
+      //HKEY_CURRENT_USER
+      for (std::vector<std::string>::iterator it = HKCU.begin(); it != HKCU.end() && !isFound; ++it) {
+        isFound = getLoLRadsDir(HKEY_CURRENT_USER, *it, dir);
       }
 
+      //HKEY_LOCAL_MACHINE
+      for (std::vector<std::string>::iterator it = HKCU.begin(); it != HKCU.end() && !isFound; ++it) {
+        isFound = getLoLRadsDir(HKEY_LOCAL_MACHINE, *it, dir);
+      }
 
-      if (status && is_directory(dir)) {  //if found
+      //Check if we managed to auto detect required lol rads dir
+      if (isFound && is_directory(dir)) {
         dir = dir.substr(0, dir.find("RADS")); //remove RADS at end
 
         if (is_directory(dir)) {
@@ -1680,7 +1726,7 @@ void readSettings(void) {
 
 
     //Error Checking configuration file
-    if (championName == "" || (Type != 1 && Type != 2) ||
+    if (champNameString == "" || (Type != 1 && Type != 2) ||
       (Type == 1 && (Difficulty != 1 && Difficulty != 2))) {
 
       errorMsg = "Configuration file is missing required entries or has invalid values.";
