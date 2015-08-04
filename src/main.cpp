@@ -76,7 +76,7 @@ void SetForegroundWindowInternal(HWND hWnd);
 void updateTrayWindow(void);
 void InitNotifyIconData(const string tip, bool showToolTip);
 void updateTrayStatus(const string status, bool showToolTip);
-void addLogEntry(const string &header, string entry);
+void addLogEntry(unsigned int header, string entry);
 
 
 
@@ -348,9 +348,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR args, int
   //Log entry
   if (LoggingEnabled) {
     addLogEntry(HEADER_PREFIX, "User desktop resolution: " + to_string(res_width) + 'x' + to_string(res_height));
-    addLogEntry(HEADER_PREFIX, "User game resolution: " + GameResolution + '\n');
+    addLogEntry(HEADER_PREFIX, "User game resolution: " + GameResolution + "\n");
 
-    addLogEntry(NORMAL_PREFIX, "Entering Cycle: " + to_string(cycleNumber) + '\n');
+    addLogEntry(NORMAL_PREFIX, "Entering Cycle: " + to_string(cycleNumber) + "\n");
   }
 
   //Ensure focusing can occur
@@ -1042,7 +1042,7 @@ void clickMain(void) {
 
       //Logging
       if (LoggingEnabled) {
-        addLogEntry(NORMAL_PREFIX, "Entering Cycle: " + to_string(cycleNumber) + '\n');
+        addLogEntry(NORMAL_PREFIX, "Entering Cycle: " + to_string(cycleNumber) + "\n");
       }
 
       ++cycleNumber;
@@ -1832,16 +1832,13 @@ void quitWithErrorMessage(const string &error, const string &errorType, unsigned
 }
 
 //Write a line to the log file
-void addLogEntry(const string &header, string entry)
+void addLogEntry(unsigned int HEADER_TYPE, string entry)
 {
   //Append new line to entry
-  entry.append("\n");
+  std::string output = entry + "\n";
 
-  if (header == HEADER_PREFIX) { //Header entry
-    entry.insert(0, HEADER_PREFIX + ' ');
-  }
-  //Otherwise calculate timestamps
-  else {
+  //Append time prefix to normal log entries
+  if (HEADER_TYPE == NORMAL_PREFIX) {
     time_t timeNow = time(0);
     tm *ltm = localtime(&timeNow);
 
@@ -1859,9 +1856,9 @@ void addLogEntry(const string &header, string entry)
     if (ltm->tm_sec < 10)
       sec.insert(0, "0");
 
-    entry.insert(0, NORMAL_PREFIX "[" + hour + ':' + min + ':' + sec + "] ");
+    output.insert(0, "[" + hour + ':' + min + ':' + sec + "] ");
   }
 
   //Write to log
-  logFile << entry;
+  logFile << output;
 }
