@@ -1,9 +1,9 @@
 /*
- *  definitions.h
- *
- *  One's Auto Queue Definition Header
- *
- */
+*  definitions.h
+*
+*  One's Auto Queue Definition Header
+*
+*/
 
 #ifndef _ONE_AUTO_QUEUE_DEFS
 #define _ONE_AUTO_QUEUE_DEFS
@@ -14,8 +14,8 @@
 #define VERSION "2.00"
 
 //Logging
-#define HEADER_PREFIX "@@@"
-#define NORMAL_PREFIX "@"
+#define HEADER_PREFIX 0
+#define NORMAL_PREFIX 1
 #define LOG_FOLDER "LOG FILES"
 
 #define SETTINGS_FILE "settings.ini"

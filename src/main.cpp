@@ -6,9 +6,9 @@
 */
 
 //OpenCV
-#include "opencv2/core/core.hpp"
-#include "opencv2/highgui/highgui.hpp"
-#include "opencv2/imgproc/imgproc.hpp"
+#include <opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
 
 //C++
 #include <map>
@@ -40,6 +40,7 @@
 #include <boost/assign.hpp>
 #include <boost/algorithm/string.hpp>
 
+
 /* Namespaces */
 using namespace std;
 using namespace cv;
@@ -55,11 +56,11 @@ bool saveBitmap(LPCSTR filename, HBITMAP bmp, HPALETTE pal);
 double matchTem(HWND handle, Mat *templ); //Match image with provided template and return min value
 double matchTwoTem(HWND handle, Mat *firstTem, Mat *secondTem, int *targetMatch); //Same as above but compares two images
 
-//Program flow
+                                                                                  //Program flow
 void clickMain(void); // Main clicking process function, runs in a seperate thread
 void ClickTarget(HWND hwnd, int x, int y, int cols, int rows, int xoffset, int yoffset); // Clicks center of matched image
 
-// Checking and failsafes
+                                                                                         // Checking and failsafes
 void resetCycle(void);
 void toggleisActive(void);
 void readSettings(void);
@@ -83,7 +84,7 @@ void addLogEntry(unsigned int header, string entry);
 /* Global Variables */
 int curWindow = NO_WINDOW; //0 = none, 1 = client and 2 = game
 
-//Coordinates
+                           //Coordinates
 int xCord = NULL;
 int yCord = NULL;
 
@@ -110,7 +111,7 @@ double GOOD_TOLERANCE = 0.2; //For general matching, where you have non distinct
 double STRICT_TOLERANCE = 0.05; //stricter for unique images
 double VERY_STRICT_TOLERANCE = 0.01; //need perfect match
 
-//League of Legends literal strings
+                                     //League of Legends literal strings
 LPCTSTR clientName = TEXT("PVP.net Client");
 LPCTSTR gameName = TEXT("League of Legends (TM) Client");
 string gameProcName = "League of Legends.exe";
@@ -131,7 +132,7 @@ bool terminateProgram = false;
 Mat frame, result;
 int match_method = CV_TM_SQDIFF_NORMED; //default for client = CV_TM_SQDIFF_NORMED, default for game = CV_TM_SQDIFF_NORMED
 
-//Template Variables
+                                        //Template Variables
 int currentStageIndex = 0; //indexes image match process
 string extensionType = ".jpg";
 string image_folder = "imgTemplates\\";
@@ -143,7 +144,7 @@ char wchPath[MAX_PATH];
 std::map<std::string, std::string> templateNames; //contains full mapping of templateShortNames to templateNiceNames
 std::vector<std::string> templateMode; //Contains the actual template names for the given game type (queue type)
 
-//Error logging file handler
+                                       //Error logging file handler
 std::ofstream logFile;
 int cycleNumber = 1;
 
@@ -157,128 +158,128 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) 
   switch (message) {
   case WM_COMMAND:
   {
-                   if (lParam == WM_RBUTTONDOWN) { //Show menu
-                     // Get current mouse position.
-                     POINT curPoint;
-                     GetCursorPos(&curPoint);
+    if (lParam == WM_RBUTTONDOWN) { //Show menu
+                                    // Get current mouse position.
+      POINT curPoint;
+      GetCursorPos(&curPoint);
 
-                     // Set to top to gain control
-                     SetForegroundWindow(hwnd);
+      // Set to top to gain control
+      SetForegroundWindow(hwnd);
 
-                     // TrackPopupMenu blocks the app until TrackPopupMenu returns
-                     UINT clicked = TrackPopupMenu(
-                       hMenu,
-                       NULL,
-                       curPoint.x,
-                       curPoint.y,
-                       0,
-                       hwnd,
-                       NULL
-                       );
-                   }
+      // TrackPopupMenu blocks the app until TrackPopupMenu returns
+      UINT clicked = TrackPopupMenu(
+        hMenu,
+        NULL,
+        curPoint.x,
+        curPoint.y,
+        0,
+        hwnd,
+        NULL
+        );
+    }
 
-                   //Switch params
-                   switch (LOWORD(wParam))
-                   {
-                   case ID_TRAY_EXIT_CONTEXT_MENU_ITEM:
-                     SendMessage(hwnd, WM_DESTROY, 0, 0);
-                     PostQuitMessage(0);
-                     break;
-                   case ID_TRAY_CHANGE_TO_0:
-                   case ID_TRAY_CHANGE_TO_1:
-                   case ID_TRAY_CHANGE_TO_2:
-                   case ID_TRAY_CHANGE_TO_3:
-                   case ID_TRAY_CHANGE_TO_4:
-                   case ID_TRAY_CHANGE_TO_5:
-                   case ID_TRAY_CHANGE_TO_6:
-                   case ID_TRAY_CHANGE_TO_7:
-                   case ID_TRAY_CHANGE_TO_8:
-                   case ID_TRAY_CHANGE_TO_9:
-                   case ID_TRAY_CHANGE_TO_10:
-                   case ID_TRAY_CHANGE_TO_11:
-                   case ID_TRAY_CHANGE_TO_12:
-                   case ID_TRAY_CHANGE_TO_13:
-                   case ID_TRAY_CHANGE_TO_14:
-                   case ID_TRAY_CHANGE_TO_15:
-                   case ID_TRAY_CHANGE_TO_16:
-                     currentStageIndex = LOWORD(wParam) - ID_TRAY_CHANGE_TO_0;
-                     updateTrayStatus(TIP_PREFIX "Stage Changed (" + templateNames[templateMode[currentStageIndex]] + ")", true);
-                     break;
+    //Switch params
+    switch (LOWORD(wParam))
+    {
+    case ID_TRAY_EXIT_CONTEXT_MENU_ITEM:
+      SendMessage(hwnd, WM_DESTROY, 0, 0);
+      PostQuitMessage(0);
+      break;
+    case ID_TRAY_CHANGE_TO_0:
+    case ID_TRAY_CHANGE_TO_1:
+    case ID_TRAY_CHANGE_TO_2:
+    case ID_TRAY_CHANGE_TO_3:
+    case ID_TRAY_CHANGE_TO_4:
+    case ID_TRAY_CHANGE_TO_5:
+    case ID_TRAY_CHANGE_TO_6:
+    case ID_TRAY_CHANGE_TO_7:
+    case ID_TRAY_CHANGE_TO_8:
+    case ID_TRAY_CHANGE_TO_9:
+    case ID_TRAY_CHANGE_TO_10:
+    case ID_TRAY_CHANGE_TO_11:
+    case ID_TRAY_CHANGE_TO_12:
+    case ID_TRAY_CHANGE_TO_13:
+    case ID_TRAY_CHANGE_TO_14:
+    case ID_TRAY_CHANGE_TO_15:
+    case ID_TRAY_CHANGE_TO_16:
+      currentStageIndex = LOWORD(wParam) - ID_TRAY_CHANGE_TO_0;
+      updateTrayStatus(TIP_PREFIX "Stage Changed (" + templateNames[templateMode[currentStageIndex]] + ")", true);
+      break;
 
-                   case ID_TRAY_TOGGLE_PAUSE:
-                     toggleisActive(); //toggle status
-                     Sleep(500); //sleep for a bit
-                     break;
+    case ID_TRAY_TOGGLE_PAUSE:
+      toggleisActive(); //toggle status
+      Sleep(500); //sleep for a bit
+      break;
 
-                   case ID_TRAY_FINISH_LAST_CYCLE:
-                     isActive = true; //resume program
-                     breakNextCycle = true;
-                     break;
+    case ID_TRAY_FINISH_LAST_CYCLE:
+      isActive = true; //resume program
+      breakNextCycle = true;
+      break;
 
-                   case ID_TRAY_RESET_CYCLE:
-                   {
-                                             string tip = TIP_PREFIX "Paused (Cycle Reset)";
-                                             updateTrayStatus(tip, true);
-                                             resetCycle(); //reset cycle
-                                             Sleep(500);
-                   }
-                     break;
-
-                   case ID_TRAY_DONATE:
-                     ShellExecuteA(NULL, "open", DONATE_URL, NULL, NULL, SW_SHOWNORMAL); //Open donation url
-                     break;
-
-                   }
-  }
+    case ID_TRAY_RESET_CYCLE:
+    {
+      string tip = TIP_PREFIX "Paused (Cycle Reset)";
+      updateTrayStatus(tip, true);
+      resetCycle(); //reset cycle
+      Sleep(500);
+    }
     break;
+
+    case ID_TRAY_DONATE:
+      ShellExecuteA(NULL, "open", DONATE_URL, NULL, NULL, SW_SHOWNORMAL); //Open donation url
+      break;
+
+    }
+  }
+  break;
 
   case WM_CREATE:
   {
-                  MENUITEMINFO separatorBtn = { 0 };
-                  separatorBtn.cbSize = sizeof(MENUITEMINFO);
-                  separatorBtn.fMask = MIIM_FTYPE;
-                  separatorBtn.fType = MFT_SEPARATOR;
+    MENUITEMINFO separatorBtn = { 0 };
+    separatorBtn.cbSize = sizeof(MENUITEMINFO);
+    separatorBtn.fMask = MIIM_FTYPE;
+    separatorBtn.fType = MFT_SEPARATOR;
 
-                  hMenu = CreatePopupMenu();
+    hMenu = CreatePopupMenu();
 
-                  if (hMenu) { //Main menu
-                    hChangeIndex = CreatePopupMenu();
-                    if (hChangeIndex) { //Change index menu
+    if (hMenu) { //Main menu
+      hChangeIndex = CreatePopupMenu();
+      if (hChangeIndex) { //Change index menu
 
-                      //Get the type selected via config
-                      std::string typeNiceName;
-                      if (Type == TYPE_COOP) {
-                        typeNiceName = "COOP";
-                        if (Difficulty == DIFFICULTY_BEGINNER) {
-                          typeNiceName.append(" (Beginner)");
-                        }
-                        else if (Difficulty == DIFFICULTY_INTERMEDIATE) {
-                          typeNiceName.append(" (Intermediate)");
-                        }
-                      }
-                      else if (Type == TYPE_NORMAL) {
-                        typeNiceName = "Normal";
-                      }
+                          //Get the type selected via config
+        std::string typeNiceName;
+        if (Type == TYPE_COOP) {
+          typeNiceName = "COOP";
+          if (Difficulty == DIFFICULTY_BEGINNER) {
+            typeNiceName.append(" (Beginner)");
+          }
+          else if (Difficulty == DIFFICULTY_INTERMEDIATE) {
+            typeNiceName.append(" (Intermediate)");
+          }
+        }
+        else if (Type == TYPE_NORMAL) {
+          typeNiceName = "Normal";
+        }
 
-                      InsertMenu(hChangeIndex, -1, MF_GRAYED, templateMode.size() + 1, TEXT(("Selected Mode: " + typeNiceName).c_str()));
+        InsertMenu(hChangeIndex, -1, MF_GRAYED, templateMode.size() + 1, TEXT(("Selected Mode: " + typeNiceName).c_str()));
 
-                      for (size_t i = 0; i < templateMode.size(); i++) { //Loop through nice names to get menu items
-                        InsertMenu(hChangeIndex, -1, MF_STRING, ID_TRAY_CHANGE_TO_0 + i, templateNames[templateMode[i]].c_str());
-                      }
-                      AppendMenu(hMenu, MF_POPUP | MF_STRING, (UINT_PTR)hChangeIndex, TEXT("Change Stage to:"));
-                    }
+        for (size_t i = 0; i < templateMode.size(); i++) { //Loop through nice names to get menu items
+          InsertMenu(hChangeIndex, -1, MF_STRING, ID_TRAY_CHANGE_TO_0 + i, templateNames[templateMode[i]].c_str());
+        }
+        AppendMenu(hMenu, MF_POPUP | MF_STRING, (UINT_PTR)hChangeIndex, TEXT("Change Stage to:"));
+      }
 
-                    InsertMenu(hMenu, -1, MF_STRING, ID_TRAY_TOGGLE_PAUSE, TEXT("Pause/Unpause"));
-                    InsertMenu(hMenu, -1, MF_STRING, ID_TRAY_FINISH_LAST_CYCLE, TEXT("Unpause and Finish Last Cycle"));
-                    InsertMenu(hMenu, -1, MF_STRING, ID_TRAY_RESET_CYCLE, TEXT("Reset Cycle"));
-                    InsertMenuItem(hMenu, -1, FALSE, &separatorBtn);
-                    InsertMenu(hMenu, -1, MF_STRING, ID_TRAY_DONATE, TEXT("Donate"));
-                    InsertMenuItem(hMenu, -1, FALSE, &separatorBtn);
-                    InsertMenu(hMenu, -1, MF_STRING, ID_TRAY_EXIT_CONTEXT_MENU_ITEM, TEXT("Exit"));
-                  }
+      InsertMenu(hMenu, -1, MF_STRING, ID_TRAY_TOGGLE_PAUSE, TEXT("Pause/Unpause"));
+      InsertMenu(hMenu, -1, MF_STRING, ID_TRAY_FINISH_LAST_CYCLE, TEXT("Unpause and Finish Last Cycle"));
+      InsertMenu(hMenu, -1, MF_STRING, ID_TRAY_RESET_CYCLE, TEXT("Reset Cycle"));
+      InsertMenuItem(hMenu, -1, FALSE, &separatorBtn);
+      InsertMenu(hMenu, -1, MF_STRING, ID_TRAY_DONATE, TEXT("Donate"));
+      InsertMenuItem(hMenu, -1, FALSE, &separatorBtn);
+      InsertMenu(hMenu, -1, MF_STRING, ID_TRAY_EXIT_CONTEXT_MENU_ITEM, TEXT("Exit"));
+    }
 
   }
-    break;
+  break;
 
   case WM_CLOSE: //in our case, close is destory
     SendMessage(hwnd, WM_DESTROY, 0, 0);
@@ -368,7 +369,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR args, int
   wnd.hInstance = hInstance;
   wnd.lpszClassName = className;
   wnd.lpfnWndProc = WndProc;
-  wnd.cbSize = sizeof (WNDCLASSEX);
+  wnd.cbSize = sizeof(WNDCLASSEX);
 
   wnd.hIcon = LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_ICON1));
   wnd.hIconSm = LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_ICON1));
@@ -568,7 +569,7 @@ void clickMain(void) {
   int idleCount = 0;
 
   //Set random number seed
-  srand(time(NULL));
+  srand((unsigned int)time(NULL));
 
   while (true) {
     if (!isActive) {
@@ -615,9 +616,9 @@ void clickMain(void) {
             double mytolerance = matchTem(clientHandle, &sendMat);
 
             if (mytolerance > STRICT_TOLERANCE) { //failed match
-              //Somebody else has dodged
+                                                  //Somebody else has dodged
 
-              //Find particular stage
+                                                  //Find particular stage
               auto it = std::find(templateMode.begin(), templateMode.end(), STAGE_ACCEPT);
               int accept_pos_index = it - templateMode.begin();
               currentStageIndex = accept_pos_index; //look for accept again
@@ -667,7 +668,7 @@ void clickMain(void) {
 
     Sleep(125); //brif wait for update
 
-    //Logging seperator
+                //Logging seperator
     if (LoggingEnabled) {
       logFile << "\n";
     }
@@ -693,10 +694,10 @@ void clickMain(void) {
     double tolerance = 0;
     unsigned int SLEEPTIMER = 1000; //Reset sleep timer
 
-    /*
-     * Template matching calls.
-     * We search for particular stages here and perform different actions based on the particular stage
-    */
+                                    /*
+                                    * Template matching calls.
+                                    * We search for particular stages here and perform different actions based on the particular stage
+                                    */
 
     if (templateMode[currentStageIndex] == STAGE_SERVER_DIALOG)
     {
@@ -765,7 +766,7 @@ void clickMain(void) {
           else if (targetMatch == 2) {  //search button found
             tempMat = searchMat; //set tempmat to search mat and go on to perform actions
 
-            //Find particular stage
+                                 //Find particular stage
             auto it = std::find(templateMode.begin(), templateMode.end(), STAGE_SEARCH);
             int search_pos_index = it - templateMode.begin();
             currentStageIndex = search_pos_index; //Go back to pressing play, we have to wait
@@ -795,8 +796,8 @@ void clickMain(void) {
       tolerance = matchTem(handle, &tempMat);
 
       if (tolerance > STRICT_TOLERANCE) { //failed match
-        //Somebody else has dodged
-        //Find particular stage
+                                          //Somebody else has dodged
+                                          //Find particular stage
         auto it = std::find(templateMode.begin(), templateMode.end(), STAGE_ACCEPT);
         int accept_pos_index = it - templateMode.begin();
         currentStageIndex = accept_pos_index; //look for accept againn
@@ -828,7 +829,7 @@ void clickMain(void) {
         int accept_pos_index = it - templateMode.begin();
         currentStageIndex = accept_pos_index; //look for accept again
 
-        //Reset champ preference
+                                              //Reset champ preference
         championListPos = 0;
 
         //Logging
@@ -840,8 +841,8 @@ void clickMain(void) {
         continue;
       }
       else if (targetMatch == 2) { //grey lockin found
-        //Someone took our champion
-        //See if we have more preferences
+                                   //Someone took our champion
+                                   //See if we have more preferences
         ++championListPos;
 
         if (championListPos < championList.size()) {
@@ -884,8 +885,8 @@ void clickMain(void) {
       tolerance = matchTem(handle, &tempMat);
 
       if (tolerance > STRICT_TOLERANCE) { //failed match
-        //Somebody else has dodged
-        //Find particular stage
+                                          //Somebody else has dodged
+                                          //Find particular stage
         auto it = std::find(templateMode.begin(), templateMode.end(), STAGE_ACCEPT);
         int accept_pos_index = it - templateMode.begin();
         currentStageIndex = accept_pos_index; //look for accept againn
@@ -910,14 +911,14 @@ void clickMain(void) {
       if (tolerance < STRICT_TOLERANCE) {
         breakableSleep(5000); //sleep just in case we just found button
 
-        //Double click it
+                              //Double click it
         ClickTarget(handle, xCord, yCord, tempMat.cols, tempMat.rows, 0, 0);
         ClickTarget(handle, xCord, yCord, tempMat.cols, tempMat.rows, 0, 0);
 
         system("taskkill /F /T /IM \"WerFault.exe\""); //kill the error message that may appear as lol client is trash
         system("taskkill /F /T /IM \"League of Legends.exe\""); //kill the process, it can sometimes crash on game end so this is needed
 
-        //Logging
+                                                                //Logging
         if (LoggingEnabled) {
           addLogEntry(NORMAL_PREFIX, "Clicked on Continue button and closing League of Legends.exe");
         }
@@ -957,8 +958,8 @@ void clickMain(void) {
     * This is where we perform clicks and other actions based on above
     */
     if (templateMode[currentStageIndex] == STAGE_SERVER_DIALOG ||
-        templateMode[currentStageIndex] == STAGE_CROSS ||
-        templateMode[currentStageIndex] == STAGE_TITTLELESSDIAG)
+      templateMode[currentStageIndex] == STAGE_CROSS ||
+      templateMode[currentStageIndex] == STAGE_TITTLELESSDIAG)
     {
       ClickTarget(handle, xCord, yCord, tempMat.cols, tempMat.rows, (tempMat.cols / 2) - 6, 0);
     }
@@ -1001,7 +1002,7 @@ void clickMain(void) {
       while (FindWindow(NULL, gameName) != NULL) {
         breakableSleep(SLEEPTIMER); //Wait for proper game closure, check every 5 seconds
 
-        //Logging
+                                    //Logging
         if (LoggingEnabled) {
           addLogEntry(NORMAL_PREFIX, "League of Legends.exe still open, waiting for program closure.");
         }
@@ -1101,7 +1102,7 @@ double matchTem(HWND handle, Mat *templ) {
   ShowWindow(handle, SW_SHOWDEFAULT); //maximize handle
   SetForegroundWindowInternal(handle); //set foreground window
 
-  //Get Window position information
+                                       //Get Window position information
   RECT windowRect;
   GetWindowRect(handle, &windowRect);
 
@@ -1174,7 +1175,7 @@ double matchTwoTem(HWND handle, Mat *firstTem, Mat *secondTem, int *targetMatch)
   ShowWindow(handle, SW_SHOWDEFAULT); //maximize handle
   SetForegroundWindowInternal(handle); //bring to foreground
 
-  //Get Window position information
+                                       //Get Window position information
   RECT windowRect;
   GetWindowRect(handle, &windowRect);
 
@@ -1219,7 +1220,7 @@ double matchTwoTem(HWND handle, Mat *firstTem, Mat *secondTem, int *targetMatch)
 
   minResult_1 = minVal_res1; //set min val
 
-  //Second Tem Results
+                             //Second Tem Results
   int result_cols_2 = frame.cols - (*secondTem).cols + 1;
   int result_rows_2 = frame.rows - (*secondTem).rows + 1;
 
@@ -1235,7 +1236,7 @@ double matchTwoTem(HWND handle, Mat *firstTem, Mat *secondTem, int *targetMatch)
   minResult_2 = minVal_res2; //set min val in array
 
 
-  //Set return variables
+                             //Set return variables
   if (minResult_1 == MATCH_FAILED && minResult_2 == MATCH_FAILED) { //no match found
     *targetMatch = MATCH_FAILED;
 
@@ -1246,13 +1247,13 @@ double matchTwoTem(HWND handle, Mat *firstTem, Mat *secondTem, int *targetMatch)
     return minVal;
   }
   else if (minResult_1 <= minResult_2 && minResult_1 != MATCH_FAILED) { //check first
-    //firstresult.copyTo(result);
+                                                                        //firstresult.copyTo(result);
     matchLoc = matchLoc_res1;
     minVal = minResult_1;
     *targetMatch = 1;
   }
   else if (minResult_2 <= minResult_1 && minResult_2 != MATCH_FAILED) { //check second
-    //secondresult.copyTo(result);
+                                                                        //secondresult.copyTo(result);
     matchLoc = matchLoc_res2;
     minVal = minResult_2;
     *targetMatch = 2;
@@ -1399,7 +1400,7 @@ void ClickTarget(HWND hwnd, int x, int y, int cols, int rows, int xoffset, int y
 
 
 //Capture screenshot of window from hwnd
-bool hwnd2image(HWND hwnd, LPCSTR fname){
+bool hwnd2image(HWND hwnd, LPCSTR fname) {
   bool status = false;
 
   HDC hdcSource = GetDC(NULL);
@@ -1541,7 +1542,7 @@ void updateTrayStatus(const string status, bool showToolTip) {
 void toggleisActive(void) {
   isActive = !isActive; //switch bool isactive
 
-  // Show notification of status
+                        // Show notification of status
   if (isActive) {
     updateTrayStatus(TIP_PREFIX "Running! Looking for: " + templateNames[templateMode[currentStageIndex]], true);
   }
@@ -1617,7 +1618,7 @@ void readSettings(void) {
       for (std::vector<std::string>::iterator it = HKCU.begin(); it != HKCU.end() && !isFound; ++it) {
         isFound = getLoLRadsDir(HKEY_CLASSES_ROOT, *it, dir);
       }
-      
+
       //HKEY_CURRENT_USER
       for (std::vector<std::string>::iterator it = HKCU.begin(); it != HKCU.end() && !isFound; ++it) {
         isFound = getLoLRadsDir(HKEY_CURRENT_USER, *it, dir);
@@ -1680,7 +1681,7 @@ void readSettings(void) {
     if (!is_directory(LOG_FOLDER)) {
       if (!create_directory(LOG_FOLDER)) { //if directory making failed
 
-        //Convert to proper types
+                                           //Convert to proper types
         std::string errorText = "Failed to create log file. Logging has been disabled\n\nWarning Code: " + to_string(ERR_CREATE_LOG_FILE);
         std::string errorTypeText = NAME " - Logging Error";
 

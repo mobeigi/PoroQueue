@@ -14,4 +14,33 @@
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\src\definitions.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\resource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\src\main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Ones Auto Queue.rc">
+      <Filter>Resource Files</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="D:\Mohammad\Programming\Visual Studio Projects\OnesAutoQueue\Icon\icon.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="d:\mohammad\programming\visual studio projects\onesautoqueue\icon\icon2.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="D:\Mohammad\Programming\Visual Studio Projects\OnesAutoQueue\Icon\poro-only.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+  </ItemGroup>
 </Project>
