@@ -105,7 +105,7 @@ int Type = NULL;
 int Difficulty = NULL;
 UINT PauseUnpauseHotkey = VK_F1;
 UINT ResetHotkey = VK_F2;
-int LoggingEnabled = NULL;
+bool LoggingEnabled = false;
 
 double GOOD_TOLERANCE = 0.2; //For general matching, where you have non distinct images
 double STRICT_TOLERANCE = 0.05; //stricter for unique images
@@ -305,18 +305,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR args, int
 
   //Read Configuration Files and set required Global Varis
   readSettings();
-
-  //Logging
-  if (LoggingEnabled) {
-    // Add inital entries
-    time_t now = time(0);
-
-    addLogEntry(HEADER_PREFIX, "One's Auto Queue Log File");
-    addLogEntry(HEADER_PREFIX, "Version: " VERSION);
-    string dt = ctime(&now);
-    dt = dt.substr(0, dt.length() - 1); //remove new line added by ctime
-    addLogEntry(HEADER_PREFIX, "Log file created at: " + dt);
-  }
 
   //Change templateNames based on settings
   initTemplateNames();
@@ -1583,7 +1571,63 @@ void readSettings(void) {
     PauseUnpauseHotkey = strtol(pt.get<std::string>("SETTINGS.PauseUnpauseHotkey").c_str(), NULL, 0);
     ResetHotkey = strtol(pt.get<std::string>("SETTINGS.ResetHotkey").c_str(), NULL, 0);
 
-    LoggingEnabled = atoi(pt.get<std::string>("SETTINGS.LoggingEnabled").c_str());
+    //Check if logging should be enabled and create log directory/file
+    LoggingEnabled = (atoi(pt.get<std::string>("SETTINGS.LoggingEnabled").c_str()) != 0);
+
+    //Make log file and log dir if doesn't exist
+    if (!is_directory(LOG_FOLDER)) {
+      if (!create_directory(LOG_FOLDER)) { //if directory making failed
+
+                                           //Convert to proper types
+        std::string errorText = "Failed to create log file. Logging has been disabled\n\nWarning Code: " + to_string(ERR_CREATE_LOG_FILE);
+        std::string errorTypeText = NAME " - Logging Error";
+
+        MessageBox(NULL,
+          errorText.c_str(),
+          errorTypeText.c_str(),
+          MB_ICONWARNING | MB_OK);
+
+        LoggingEnabled = false;
+      }
+    }
+
+    //Create log file if required
+    if (LoggingEnabled) {
+      //Make temp file for logging
+      char buffer[L_tmpnam];
+      tmpnam(buffer);
+      std::string tmp = buffer;
+      tmp = tmp.substr(1, tmp.length() - 2); //Remove initial '/' and final '1'
+
+      time_t now = time(0);
+      tm *ltm = localtime(&now);
+
+      //Make components
+      std::string month = to_string(ltm->tm_mon + 1);
+      std::string day = to_string(ltm->tm_mday);
+
+      if (ltm->tm_mon < 10)
+        month.insert(0, "0");
+
+      if (ltm->tm_mday < 10)
+        day.insert(0, "0");
+
+
+      std::string date = to_string(1900 + ltm->tm_year) + '-' + month + '-' + day;
+
+      //Make full log file name
+      std::string logFileName = LOG_FOLDER "\\" + date + "_" + tmp + ".txt";
+
+      //Open file
+      logFile.open(logFileName);
+
+      // Add inital entries
+      addLogEntry(HEADER_PREFIX, "One's Auto Queue Log File");
+      addLogEntry(HEADER_PREFIX, "Version: " VERSION);
+      string dt = ctime(&now);
+      dt = dt.substr(0, dt.length() - 1); //remove new line added by ctime
+      addLogEntry(HEADER_PREFIX, "Log file created at: " + dt);
+    }
 
     //Get client type
     ClientType = atoi(pt.get<std::string>("GAME.ClientType").c_str());
@@ -1599,17 +1643,19 @@ void readSettings(void) {
 
       //Try looking in multiple registry locations for RADS dir
       std::vector<std::string> HKCR = boost::assign::list_of
-        ("VirtualStore\\MACHINE\\SOFTWARE\\Wow6432Node\\Riot Games\\RADS\\")
+        ("VirtualStore\\MACHINE\\SOFTWARE\\Wow6432Node\\Riot Games\\RADS")
+        ("VirtualStore\\MACHINE\\SOFTWARE\\RIOT GAMES\\RADS")
         ;
 
       std::vector<std::string> HKCU = boost::assign::list_of
-        ("VirtualStore\\MACHINE\\SOFTWARE\\Wow6432Node\\Riot Games\\RADS\\")
-        ("Software\\Riot Games\\RADS\\")
+        ("SOFTWARE\\Classes\\VirtualStore\\MACHINE\\SOFTWARE\\Wow6432Node\\Riot Games\\RADS")
+        ("SOFTWARE\\Classes\\VirtualStore\\MACHINE\\SOFTWARE\\RIOT GAMES\\RADS")
+        ("SOFTWARE\\Riot Games\\RADS")
         ;
 
       std::vector<std::string> HKLM = boost::assign::list_of
-        ("SOFTWARE\\Classes\\VirtualStore\\MACHINE\\SOFTWARE\\Wow6432Node\\Riot Games\\RADS\\")
-        ("SOFTWARE\\Wow6432Node\\Riot Games\\RADS\\")
+        ("SOFTWARE\\Wow6432Node\\Riot Games\\RADS")
+        ("SOFTWARE\\Riot Games\\RADS")
         ;
 
       bool isFound = false;
@@ -1617,16 +1663,25 @@ void readSettings(void) {
       //HKEY_CLASSES_ROOT
       for (std::vector<std::string>::iterator it = HKCU.begin(); it != HKCU.end() && !isFound; ++it) {
         isFound = getLoLRadsDir(HKEY_CLASSES_ROOT, *it, dir);
+
+        if (isFound && LoggingEnabled)
+          addLogEntry(HEADER_PREFIX, "RADS registry entry found at: [HKEY_CLASSES_ROOT] " + *it);
       }
 
       //HKEY_CURRENT_USER
       for (std::vector<std::string>::iterator it = HKCU.begin(); it != HKCU.end() && !isFound; ++it) {
         isFound = getLoLRadsDir(HKEY_CURRENT_USER, *it, dir);
+
+        if (isFound && LoggingEnabled)
+          addLogEntry(HEADER_PREFIX, "RADS registry entry found at: [HKEY_CURRENT_USER] " + *it);
       }
 
       //HKEY_LOCAL_MACHINE
       for (std::vector<std::string>::iterator it = HKCU.begin(); it != HKCU.end() && !isFound; ++it) {
         isFound = getLoLRadsDir(HKEY_LOCAL_MACHINE, *it, dir);
+
+        if (isFound && LoggingEnabled)
+          addLogEntry(HEADER_PREFIX, "RADS registry entry found at: [HKEY_LOCAL_MACHINE] " + *it);
       }
 
       //Check if we managed to auto detect required lol rads dir
@@ -1674,55 +1729,6 @@ void readSettings(void) {
         catch (exception&) {}
 
       }
-    }
-
-
-    //Make log file and log dir if doesn't exist
-    if (!is_directory(LOG_FOLDER)) {
-      if (!create_directory(LOG_FOLDER)) { //if directory making failed
-
-                                           //Convert to proper types
-        std::string errorText = "Failed to create log file. Logging has been disabled\n\nWarning Code: " + to_string(ERR_CREATE_LOG_FILE);
-        std::string errorTypeText = NAME " - Logging Error";
-
-        MessageBox(NULL,
-          errorText.c_str(),
-          errorTypeText.c_str(),
-          MB_ICONWARNING | MB_OK);
-
-        LoggingEnabled = false;
-      }
-    }
-
-    //Create 
-    if (LoggingEnabled) {
-      //Make temp file for logging
-      char buffer[L_tmpnam];
-      tmpnam(buffer);
-      std::string tmp = buffer;
-      tmp = tmp.substr(1, tmp.length() - 2); //Remove initial '/' and final '1'
-
-      time_t now = time(0);
-      tm *ltm = localtime(&now);
-
-      //Make components
-      std::string month = to_string(ltm->tm_mon + 1);
-      std::string day = to_string(ltm->tm_mday);
-
-      if (ltm->tm_mon < 10)
-        month.insert(0, "0");
-
-      if (ltm->tm_mday < 10)
-        day.insert(0, "0");
-
-
-      std::string date = to_string(1900 + ltm->tm_year) + '-' + month + '-' + day;
-
-      //Make full log file name
-      std::string logFileName = LOG_FOLDER "\\" + date + "_" + tmp + ".txt";
-
-      //Open file
-      logFile.open(logFileName);
     }
 
 
