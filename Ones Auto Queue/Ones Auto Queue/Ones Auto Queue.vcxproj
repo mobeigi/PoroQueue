@@ -114,6 +114,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalLibraryDirectories>C:\Boost\1.55.0\stage\lib;%OPENCV_BUILD%\x86\vc11\lib;%OPENCV_BUILD%\x86\vc11\bin;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>opencv_core248.lib;opencv_imgproc248.lib;opencv_highgui248.lib;opencv_ml248.lib;opencv_video248.lib;opencv_features2d248.lib;opencv_calib3d248.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <UACExecutionLevel>HighestAvailable</UACExecutionLevel>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -141,6 +142,8 @@
     <ResourceCompile Include="Ones Auto Queue.rc" />
   </ItemGroup>
   <ItemGroup>
+    <Image Include="..\..\other\OnesAutoQueue\Icon\icon.ico" />
+    <Image Include="..\..\other\OnesAutoQueue\Icon\poro-only.ico" />
     <Image Include="D:\Mohammad\Programming\Visual Studio Projects\OnesAutoQueue\Icon\icon.ico" />
     <Image Include="d:\mohammad\programming\visual studio projects\onesautoqueue\icon\icon2.ico" />
     <Image Include="D:\Mohammad\Programming\Visual Studio Projects\OnesAutoQueue\Icon\poro-only.ico" />
