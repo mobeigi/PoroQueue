@@ -76,20 +76,21 @@
 //Modes
 #define TYPE_COOP 1
 #define TYPE_NORMAL 2
+#define TYPE_ARAM 3
 
 //Difficulty
 #define DIFFICULTY_BEGINNER 1
 #define DIFFICULTY_INTERMEDIATE 2
 
 //Stage definitions for all stages that may appear
-#define STAGE_SERVER_DIALOG "serverdiag"
+#define STAGE_SERVER_DIALOG "server_diag"
 #define STAGE_CROSS "cross"
 #define STAGE_PLAY "play"
 #define STAGE_COOP "coop"
 #define STAGE_PVP "pvp"
 #define STAGE_CLASSIC "classic"
 #define STAGE_RIFT "rift"
-#define STAGE_NORMALBLIND "normalblind"
+#define STAGE_NORMALBLIND "normal_blind"
 #define STAGE_BEGINNER "beginner"
 #define STAGE_INTERMEDIATE "intermediate"
 #define STAGE_SOLOQ "soloq"
@@ -100,8 +101,11 @@
 #define STAGE_LOCKIN "lockin"
 #define STAGE_SEND "send"
 #define STAGE_CONTINUE "continue"
-#define STAGE_TITTLELESSDIAG "titlelessdiag"
+#define STAGE_TITTLELESSDIAG "titleless_diag"
 #define STAGE_HOME "home"
+#define STAGE_ARAM "aram"
+#define STAGE_HOWLING_ABYSSS "howling_abyss"
+#define STAGE_NORMAL_ALL_RANDOM "normal_all_random"
 
 //Tip definitions
 #define TIP_DODGING "Dodging queue, champ taken."

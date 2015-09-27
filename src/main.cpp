@@ -460,7 +460,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR args, int
     //Print end sequence to log
     logFile << "\n\n" << std::string(50, '-') << "\n";
 
-    addLogEntry(NORMAL_PREFIX, "Attempted to remove temp image with status code: " + to_string(remove(tempPath)));  //Remove temp image
+    addLogEntry(NORMAL_PREFIX, "Attempted to remove temporary files with status code: " + to_string(remove(tempPath)));  //Remove temp image
     addLogEntry(NORMAL_PREFIX, "Program terminated successfully");
     addLogEntry(NORMAL_PREFIX, "A total of " + to_string(cycleNumber - 1) + " cycles were completed.");
 
@@ -802,7 +802,7 @@ void clickMain(void) {
     else if (templateMode[currentStageIndex] == STAGE_LOCKIN)
     {
       //Make lockin grey mat
-      string tmp = image_folder + "lockingrey" + extensionType;
+      string tmp = image_folder + "lockin_grey" + extensionType;
       Mat lockingreyMat = imread(tmp, CV_LOAD_IMAGE_COLOR);
 
       //Call matchtwotem
@@ -1263,7 +1263,7 @@ double matchTwoTem(HWND handle, Mat *firstTem, Mat *secondTem, int *targetMatch)
 //This is also used to set nice names
 void initTemplateNames()
 {
-  templateNames.insert(std::make_pair("serverdiag", "Server Notification Dismiss"));
+  templateNames.insert(std::make_pair("server_diag", "Server Notification Dismiss"));
   templateNames.insert(std::make_pair("cross", "Honor Notification Dismiss"));
   templateNames.insert(std::make_pair("play", "Play"));
   templateNames.insert(std::make_pair("coop", "Coop vs AI"));
@@ -1271,7 +1271,7 @@ void initTemplateNames()
   templateNames.insert(std::make_pair("rift", "Summoners Rift"));
   templateNames.insert(std::make_pair("beginner", "Beginner"));
   templateNames.insert(std::make_pair("intermediate", "Intermediate"));
-  templateNames.insert(std::make_pair("serverdiag", "Server Notification Dismiss"));
+  templateNames.insert(std::make_pair("server_diag", "Server Notification Dismiss"));
   templateNames.insert(std::make_pair("soloq", "Solo Queue"));
   templateNames.insert(std::make_pair("dodged", "Dodge Check"));
   templateNames.insert(std::make_pair("accept", "Accept"));
@@ -1280,15 +1280,18 @@ void initTemplateNames()
   templateNames.insert(std::make_pair("lockin", "Lockin"));
   templateNames.insert(std::make_pair("send", "Send Chat Message"));
   templateNames.insert(std::make_pair("continue", "Continue (" + GameResolution + ")"));
-  templateNames.insert(std::make_pair("titlelessdiag", "Dismiss Level 5 Chat Notification"));
+  templateNames.insert(std::make_pair("titleless_diag", "Dismiss Level 5 Chat Notification"));
   templateNames.insert(std::make_pair("home", "Home"));
   templateNames.insert(std::make_pair("pvp", "PvP"));
-  templateNames.insert(std::make_pair("normalblind", "Normal - Blind Pick"));
+  templateNames.insert(std::make_pair("normal_blind", "Normal - Blind Pick"));
+  templateNames.insert(std::make_pair("aram", "ARAM"));
+  templateNames.insert(std::make_pair("howling_abyss", "Howling Abyss"));
+  templateNames.insert(std::make_pair("normal_all_random", "Normal - All Random"));
 
   //Set specific template options based on settings
   if (Type == TYPE_COOP) {
     //Set up template mode
-    std::string templateCoop[17] = { "serverdiag", "cross", "play", "coop", "classic", "rift", "beginner", "soloq", "dodged", "accept", "search", "champions", "lockin", "send", "continue", "titlelessdiag", "home" };
+    std::string templateCoop[17] = { "server_diag", "cross", "play", "coop", "classic", "rift", "beginner", "soloq", "dodged", "accept", "search", "champions", "lockin", "send", "continue", "titleless_diag", "home" };
 
     //1 = beginner, 2 = intermediate
     if (Difficulty == DIFFICULTY_BEGINNER)
@@ -1301,9 +1304,15 @@ void initTemplateNames()
   }
   else if (Type == TYPE_NORMAL) {
     //Set up template mode
-    std::string templateNormal[17] = { "serverdiag", "cross", "play", "pvp", "classic", "rift", "normalblind", "soloq", "dodged", "accept", "search", "champions", "lockin", "send", "continue", "titlelessdiag", "home" };
+    std::string templateNormal[17] = { "server_diag", "cross", "play", "pvp", "classic", "rift", "normal_blind", "soloq", "dodged", "accept", "search", "champions", "lockin", "send", "continue", "titleless_diag", "home" };
     templateMode.assign(templateNormal, templateNormal + 17);
   }
+  else if (Type == TYPE_ARAM) {
+    //Set up template mode
+    std::string templateNormal[14] = { "server_diag", "cross", "play", "pvp", "aram", "howling_abyss", "normal_all_random", "soloq", "dodged", "accept", "send", "continue", "titleless_diag", "home" };
+    templateMode.assign(templateNormal, templateNormal + 14);
+  }
+
 }
 
 //Check required images are found
@@ -1319,9 +1328,9 @@ void checkImages(void) {
     }
   }
 
-  std::string imagefile = image_folder + "lockingrey.jpg";
+  std::string imagefile = image_folder + "lockin_grey" + extensionType;
   if (!exists(imagefile))
-    missingfile = "lockingrey.jpg";
+    missingfile = "lockin_grey" + extensionType;
 
   //If required image is missing, terminate
   if (missingfile != "") {
@@ -1733,7 +1742,7 @@ void readSettings(void) {
 
 
     //Error Checking configuration file
-    if (champNameString == "" || (Type != 1 && Type != 2) ||
+    if (champNameString == "" || !(Type >= 1 && Type <= 3) ||
       (Type == 1 && (Difficulty != 1 && Difficulty != 2))) {
 
       errorMsg = "Configuration file is missing required entries or has invalid values.";
