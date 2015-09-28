@@ -1,6 +1,6 @@
 /*
-* Name: One's Auto Queue
-* Description: Auto Queues for popular league of legends game.
+* Name: PoroQueue
+* Description: Auto Queue tool for popular league of legends game.
 * Author: Mohammad Ghasembeigi
 * Email: webmaster@mohammadg.com
 */
@@ -1631,7 +1631,7 @@ void readSettings(void) {
       logFile.open(logFileName);
 
       // Add inital entries
-      addLogEntry(HEADER_PREFIX, "One's Auto Queue Log File");
+      addLogEntry(HEADER_PREFIX, "PoroQueue Log File");
       addLogEntry(HEADER_PREFIX, "Version: " VERSION);
       string dt = ctime(&now);
       dt = dt.substr(0, dt.length() - 1); //remove new line added by ctime

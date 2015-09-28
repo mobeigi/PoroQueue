@@ -28,18 +28,13 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="Ones Auto Queue.rc">
-      <Filter>Resource Files</Filter>
-    </ResourceCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <Image Include="D:\Mohammad\Programming\Visual Studio Projects\OnesAutoQueue\Icon\icon.ico">
+    <Image Include="D:\Mohammad\Programming\Visual Studio Projects\PoroQueue\Icon\icon.ico">
       <Filter>Resource Files</Filter>
     </Image>
-    <Image Include="d:\mohammad\programming\visual studio projects\onesautoqueue\icon\icon2.ico">
+    <Image Include="d:\mohammad\programming\visual studio projects\PoroQueue\icon\icon2.ico">
       <Filter>Resource Files</Filter>
     </Image>
-    <Image Include="D:\Mohammad\Programming\Visual Studio Projects\OnesAutoQueue\Icon\poro-only.ico">
+    <Image Include="D:\Mohammad\Programming\Visual Studio Projects\PoroQueue\Icon\poro-only.ico">
       <Filter>Resource Files</Filter>
     </Image>
     <Image Include="..\..\other\OnesAutoQueue\Icon\icon.ico">
@@ -48,5 +43,10 @@
     <Image Include="..\..\other\OnesAutoQueue\Icon\poro-only.ico">
       <Filter>Resource Files</Filter>
     </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Poro Queue.rc">
+      <Filter>Resource Files</Filter>
+    </ResourceCompile>
   </ItemGroup>
 </Project>

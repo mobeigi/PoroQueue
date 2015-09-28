@@ -20,8 +20,9 @@
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{E7B257E7-0C41-4D2B-9128-6275E8C3484A}</ProjectGuid>
-    <RootNamespace>OnesAutoQueue</RootNamespace>
+    <RootNamespace>PoroQueue</RootNamespace>
     <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
+    <ProjectName>PoroQueue</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -139,14 +140,14 @@
     <ClCompile Include="..\..\src\main.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="Ones Auto Queue.rc" />
+    <ResourceCompile Include="Poro Queue.rc" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="..\..\other\OnesAutoQueue\Icon\icon.ico" />
     <Image Include="..\..\other\OnesAutoQueue\Icon\poro-only.ico" />
-    <Image Include="D:\Mohammad\Programming\Visual Studio Projects\OnesAutoQueue\Icon\icon.ico" />
-    <Image Include="d:\mohammad\programming\visual studio projects\onesautoqueue\icon\icon2.ico" />
-    <Image Include="D:\Mohammad\Programming\Visual Studio Projects\OnesAutoQueue\Icon\poro-only.ico" />
+    <Image Include="D:\Mohammad\Programming\Visual Studio Projects\PoroQueue\Icon\icon.ico" />
+    <Image Include="d:\mohammad\programming\visual studio projects\PoroQueue\icon\icon2.ico" />
+    <Image Include="D:\Mohammad\Programming\Visual Studio Projects\PoroQueue\Icon\poro-only.ico" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

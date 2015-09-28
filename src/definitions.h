@@ -1,16 +1,16 @@
 /*
 *  definitions.h
 *
-*  One's Auto Queue Definition Header
+*  PoroQueue Definition Header
 *
 */
 
-#ifndef _ONE_AUTO_QUEUE_DEFS
-#define _ONE_AUTO_QUEUE_DEFS
+#ifndef _PORO_QUEUE_DEFS
+#define _PORO_QUEUE_DEFS
 
 /* Definitions */
 //Tool
-#define NAME "One's Auto Queue"
+#define NAME "PoroQueue"
 #define VERSION "2.00"
 
 //Logging
@@ -23,7 +23,7 @@
 
 //Client
 #define LOL_VER_REGEX "\\d\\.\\d\\.\\d\\.\\d\\d$"
-#define TIP_PREFIX "One's Auto Queue v" VERSION "\nSTATUS: "
+#define TIP_PREFIX "PoroQueue v" VERSION "\nSTATUS: "
 #define CLIENT_WIDTH 1024
 #define CLIENT_HEIGHT 640
 #define MATCH_FAILED 0
