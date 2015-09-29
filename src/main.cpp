@@ -97,17 +97,22 @@ RECT game_res;
 std::vector<std::string> championList;
 size_t championListPos = 0;
 
+std::vector<std::string> ARAMRerollList;
+const int ARAMHighlightXPixelDifference = 100;
+const int ARAMHighlightYPixelDifference = 50;
+
 std::string TextToCall;
 std::string PathToLoLFolder;
 int ClientType = NULL;
 std::string GameResolution = "Unknown";
 int Type = NULL;
-int Difficulty = NULL;
+int COOPvsAIDifficulty = NULL;
 UINT PauseUnpauseHotkey = VK_F1;
 UINT ResetHotkey = VK_F2;
 bool LoggingEnabled = false;
 
-double GOOD_TOLERANCE = 0.2; //For general matching, where you have non distinct images
+double DESPERATE_TOLERANCE = 0.25; //For desperate matches
+double GOOD_TOLERANCE = 0.1; //For general matching, where you have non distinct images
 double STRICT_TOLERANCE = 0.05; //stricter for unique images
 double VERY_STRICT_TOLERANCE = 0.01; //need perfect match
 
@@ -136,6 +141,7 @@ int match_method = CV_TM_SQDIFF_NORMED; //default for client = CV_TM_SQDIFF_NORM
 int currentStageIndex = 0; //indexes image match process
 string extensionType = ".jpg";
 string image_folder = "imgTemplates\\";
+string champion_icon_folder = "champions\\";
 string tempPath;
 char wchPath[MAX_PATH];
 
@@ -250,10 +256,10 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) 
         std::string typeNiceName;
         if (Type == TYPE_COOP) {
           typeNiceName = "COOP";
-          if (Difficulty == DIFFICULTY_BEGINNER) {
+          if (COOPvsAIDifficulty == DIFFICULTY_BEGINNER) {
             typeNiceName.append(" (Beginner)");
           }
-          else if (Difficulty == DIFFICULTY_INTERMEDIATE) {
+          else if (COOPvsAIDifficulty == DIFFICULTY_INTERMEDIATE) {
             typeNiceName.append(" (Intermediate)");
           }
         }
@@ -732,16 +738,24 @@ void clickMain(void) {
       RECT windowRect;
       GetWindowRect(handle, &windowRect);
 
-      //Make search
-      string tmp = image_folder + "search" + extensionType;
-      Mat searchMat = imread(tmp, CV_LOAD_IMAGE_COLOR);
+      //Select image to use as 'dodge check image' based on queue
+      //Dodge check image is the image that will be visable (detectable) once we are in champion select
+      string tmp;
+      if (Type == TYPE_COOP || Type == TYPE_NORMAL)
+        tmp = image_folder + "search" + extensionType;
+      else if (Type == TYPE_ARAM)
+        tmp = image_folder + "howling_abyss_map" + extensionType;
+
+      Mat dodgeCheckMat = imread(tmp, CV_LOAD_IMAGE_COLOR);
 
       //Call matchtwotem
       int targetMatch = MATCH_FAILED;
-      tolerance = matchTwoTem(handle, &tempMat, &searchMat, &targetMatch);
+      tolerance = matchTwoTem(handle, &tempMat, &dodgeCheckMat, &targetMatch);
 
-      //Keep looking for accept/search while we are not up to search step
-      while (templateMode[currentStageIndex] != STAGE_SEARCH  && isActive) {
+      //Keep looking for accept while we have not detected the dodgecheckimage
+      bool gotoNextStage = false;
+
+      while (isActive) { //Keep looping unless user pauses tool
         if (targetMatch != MATCH_FAILED && tolerance <= VERY_STRICT_TOLERANCE) {
           if (targetMatch == 1) { //accept button found
 
@@ -751,16 +765,29 @@ void clickMain(void) {
 
             ClickTarget(handle, xCord, yCord, tempMat.cols, tempMat.rows, 0, 0);
           }
-          else if (targetMatch == 2) {  //search button found
-            tempMat = searchMat; //set tempmat to search mat and go on to perform actions
+          else if (targetMatch == 2) {  //dodge check image found
+            //In Coop and Normal queues, continue with search stage
+            if (Type == TYPE_COOP || Type == TYPE_NORMAL) {
+              tempMat = dodgeCheckMat; //set tempmat to search mat and go on to perform actions
 
-                                 //Find particular stage
-            auto it = std::find(templateMode.begin(), templateMode.end(), STAGE_SEARCH);
-            int search_pos_index = it - templateMode.begin();
-            currentStageIndex = search_pos_index; //Go back to pressing play, we have to wait
+              //Find particular stage
+              auto it = std::find(templateMode.begin(), templateMode.end(), STAGE_SEARCH);
+              int search_pos_index = it - templateMode.begin();
+              currentStageIndex = search_pos_index;
 
-            if (LoggingEnabled) {
-              addLogEntry(NORMAL_PREFIX, "Found search button in accept phase. Continuing current loop for search.");
+              if (LoggingEnabled) {
+                addLogEntry(NORMAL_PREFIX, "Found search (dodge check image) in accept stage. Continuing current loop for search.");
+              }
+            }
+            //In ARAM queue, move onto next stage
+            else if (Type == TYPE_ARAM) {
+              //Move onto next stage
+              ++currentStageIndex;
+              gotoNextStage = true;
+
+              if (LoggingEnabled) {
+                addLogEntry(NORMAL_PREFIX, "Found howling abyss map (dodge check image) in accept stage. Moving to next stage.");
+              }
             }
 
             break; //leave while loop
@@ -772,11 +799,12 @@ void clickMain(void) {
         targetMatch = MATCH_FAILED; //reset target match
 
         SetCursorPos(windowRect.left, windowRect.top); //move mouse to remove accept button hover (shine)
-        tolerance = matchTwoTem(handle, &tempMat, &searchMat, &targetMatch);
+        tolerance = matchTwoTem(handle, &tempMat, &dodgeCheckMat, &targetMatch);
       }
 
-      //If paused
-      if (!isActive)
+      //Check for pauses
+      //Check to see if we should goto next stage
+      if (!isActive || gotoNextStage)
         continue; //go to next loop
     }
     else if (templateMode[currentStageIndex] == STAGE_CHAMPIONS)
@@ -866,6 +894,156 @@ void clickMain(void) {
         }
 
         continue; //go onto next loop
+      }
+    }
+    else if (templateMode[currentStageIndex] == STAGE_ARAM_REROLL)
+    {
+      //Check to see if we wish to reroll (is a reroll list provided?)
+      if (ARAMRerollList.size() == 0) {
+        //No reroll champs specified, move on
+
+        //Logging
+        if (LoggingEnabled) {
+          addLogEntry(NORMAL_PREFIX, "No reroll champions provided, moving to next stage.");
+        }
+
+        ++currentStageIndex; //move onto next item
+        continue;
+      }
+
+      //Make reroll grey mat
+      string tmp = image_folder + "reroll_grey" + extensionType;
+      Mat rerollgreyMat = imread(tmp, CV_LOAD_IMAGE_COLOR);
+
+      //Call matchtwotem
+      int targetMatch = MATCH_FAILED;
+      tolerance = matchTwoTem(handle, &tempMat, &rerollgreyMat, &targetMatch);
+
+      if (targetMatch == MATCH_FAILED || tolerance > GOOD_TOLERANCE) {
+        //Somebody else has dodged
+
+        //Find particular stage
+        auto it = std::find(templateMode.begin(), templateMode.end(), STAGE_ACCEPT);
+        int accept_pos_index = it - templateMode.begin();
+        currentStageIndex = accept_pos_index; //look for accept again
+
+        //Logging
+        if (LoggingEnabled) {
+          addLogEntry(NORMAL_PREFIX, "Finding reroll button failed, another player has dodged. Looking for accept.");
+        }
+
+        breakableSleep(500);
+        continue;
+      }
+      else if (targetMatch == 1) { //Blue reroll (rerolls available)
+
+        //We have champions we wish to reroll on
+        bool performReroll = false;
+
+        for (auto it = ARAMRerollList.begin(); it != ARAMRerollList.end(); ++it) {
+
+          addLogEntry(NORMAL_PREFIX, "Inside loop for ARAMrerollList with champion: (" + *it + ")");
+
+          //Check to see if champion is present
+
+          //Make champion icon mat
+          string tmp = image_folder + champion_icon_folder + *it + extensionType;
+          Mat championMat = imread(tmp, CV_LOAD_IMAGE_COLOR);
+
+          tolerance = matchTem(handle, &championMat);
+
+          //Preserve champion mat coords
+          int champXCord = xCord;
+          int champYCord = yCord;
+
+          addLogEntry(NORMAL_PREFIX, "Champion Icon COORDS: x(" + to_string(champXCord) + "), y(" + to_string(champYCord) + ")");
+
+          if (tolerance > DESPERATE_TOLERANCE) {
+            //This champ icon not found, not currently a champion in ARAM lobby
+            addLogEntry(NORMAL_PREFIX, "Champion icon not found, champion is not in ARAM lobby.");
+            continue;
+          }
+          else {
+            //Found champion icon
+            //Check if this is our champion and not someone elses champion
+
+            //Make aram highlight mat
+            string tmp = image_folder + "aram_highlight" + extensionType;
+            Mat aramHighlightMat = imread(tmp, CV_LOAD_IMAGE_COLOR);
+            tolerance = matchTem(handle, &aramHighlightMat);
+
+            if (tolerance > GOOD_TOLERANCE) {
+              //This shouldn't ever happen
+              //If it does it means we failed to find ARAM highlight, improve image or increase tolerance
+              addLogEntry(NORMAL_PREFIX, "This should never happen. Failed to find ARAM highlight, increase tolerance or improve image.");
+              continue;
+            }
+            else {
+              //We found our ARAM highlight coords
+              //Check to see if our highlight is close enough to matched champion coords
+              if (std::abs(champYCord - yCord) <= ARAMHighlightYPixelDifference
+                  &&  std::abs(champXCord - xCord) <= ARAMHighlightXPixelDifference) {
+                //This is our champion, we should reroll
+
+                addLogEntry(NORMAL_PREFIX, "Champion is ours, we should reroll.");
+
+                //Leave loop knowing we must reroll
+                performReroll = true;
+                break;
+              }
+              else {
+                //Not our champion continue
+                addLogEntry(NORMAL_PREFIX, "Not our champion, continue searching.");
+                continue;
+              }
+            }
+
+          }
+        }
+
+        //Check to see if we will reroll or simply proceed to next stage
+        if (performReroll) {
+          //Match the reroll template so we can click it
+          tolerance = matchTem(handle, &tempMat);
+
+          //Logging
+          if (LoggingEnabled) {
+            addLogEntry(NORMAL_PREFIX, "Champion found in reroll list, rerolling this champion now.");
+          }
+
+          //Click reroll button
+          ClickTarget(handle, xCord, yCord, tempMat.cols, tempMat.rows, 0, 0);
+          breakableSleep(2000); //wait for animations
+
+          //move onto reroll stage again in case we should reroll again
+          //if we have run out of rerolls or no champion is not in reroll list, we will move onto next stage next loop without rerolling
+          //Otherwise we will perform another reroll (2 rerolls in a row)
+          continue;
+
+        }
+        else {
+          //We will not reroll, continue to next stage
+          //Logging
+          if (LoggingEnabled) {
+            addLogEntry(NORMAL_PREFIX, "Champion not in reroll list, moving to next stage.");
+          }
+
+          ++currentStageIndex; //move onto next item
+          continue;
+        }
+
+      }
+      else if (targetMatch == 2) { //grey reroll found
+                                   //No rerolls are available
+                                   //Simply play current champion, move onto next stage
+
+        //Logging
+        if (LoggingEnabled) {
+          addLogEntry(NORMAL_PREFIX, "No rerolls available, moving to next stage.");
+        }
+
+        ++currentStageIndex; //move onto next stage
+        continue;
       }
     }
     else if (templateMode[currentStageIndex] == STAGE_SEND)
@@ -1287,6 +1465,7 @@ void initTemplateNames()
   templateNames.insert(std::make_pair("aram", "ARAM"));
   templateNames.insert(std::make_pair("howling_abyss", "Howling Abyss"));
   templateNames.insert(std::make_pair("normal_all_random", "Normal - All Random"));
+  templateNames.insert(std::make_pair("reroll", "ARAM Reroll"));
 
   //Set specific template options based on settings
   if (Type == TYPE_COOP) {
@@ -1294,9 +1473,9 @@ void initTemplateNames()
     std::string templateCoop[17] = { "server_diag", "cross", "play", "coop", "classic", "rift", "beginner", "soloq", "dodged", "accept", "search", "champions", "lockin", "send", "continue", "titleless_diag", "home" };
 
     //1 = beginner, 2 = intermediate
-    if (Difficulty == DIFFICULTY_BEGINNER)
+    if (COOPvsAIDifficulty == DIFFICULTY_BEGINNER)
       templateCoop[6] = "beginner";
-    else if (Difficulty == DIFFICULTY_INTERMEDIATE)
+    else if (COOPvsAIDifficulty == DIFFICULTY_INTERMEDIATE)
       templateCoop[6] = "intermediate";
 
     templateMode.assign(templateCoop, templateCoop + 17);
@@ -1309,8 +1488,8 @@ void initTemplateNames()
   }
   else if (Type == TYPE_ARAM) {
     //Set up template mode
-    std::string templateNormal[14] = { "server_diag", "cross", "play", "pvp", "aram", "howling_abyss", "normal_all_random", "soloq", "dodged", "accept", "send", "continue", "titleless_diag", "home" };
-    templateMode.assign(templateNormal, templateNormal + 14);
+    std::string templateNormal[15] = { "server_diag", "cross", "play", "pvp", "aram", "howling_abyss", "normal_all_random", "soloq", "dodged", "accept", "reroll", "send", "continue", "titleless_diag", "home" };
+    templateMode.assign(templateNormal, templateNormal + 15);
   }
 
 }
@@ -1328,9 +1507,32 @@ void checkImages(void) {
     }
   }
 
+  //Check for lockin grey
   std::string imagefile = image_folder + "lockin_grey" + extensionType;
   if (!exists(imagefile))
     missingfile = "lockin_grey" + extensionType;
+
+  //Check for ARAM related images
+  imagefile = image_folder + "reroll_grey" + extensionType;
+  if (!exists(imagefile))
+    missingfile = "reroll_grey" + extensionType;
+
+  imagefile = image_folder + "aram_highlight" + extensionType;
+  if (!exists(imagefile))
+    missingfile = "aram_highlight" + extensionType;
+
+  imagefile = image_folder + "howling_abyss_map" + extensionType;
+  if (!exists(imagefile))
+    missingfile = "howling_abyss_map" + extensionType;
+
+  //Check for champion images in reroll list
+  for (auto it = ARAMRerollList.begin(); it != ARAMRerollList.end(); ++it) {
+    imagefile = image_folder + champion_icon_folder + *it + extensionType;
+    if (!exists(imagefile)) {
+      missingfile = champion_icon_folder + *it + extensionType;
+      break;
+    }
+  }
 
   //If required image is missing, terminate
   if (missingfile != "") {
@@ -1566,13 +1768,18 @@ void readSettings(void) {
 
     //Read champion name
     std::string champNameString = pt.get<std::string>("CHAMPION.Name");
-    std::vector<std::string> words;
     boost::split(championList, champNameString, boost::is_any_of(","), boost::token_compress_on);
+
+    //Read ARAM Reroll List
+    std::string rerollString = pt.get<std::string>("QUEUE.ARAMRerollList");
+    if (!rerollString.empty())
+      boost::split(ARAMRerollList, rerollString, boost::is_any_of(","), boost::token_compress_on);
 
     TextToCall = pt.get<std::string>("QUEUE.TextToCall");
     Type = atoi(pt.get<std::string>("QUEUE.Type").c_str());
-    Difficulty = atoi(pt.get<std::string>("QUEUE.Difficulty").c_str());
+    COOPvsAIDifficulty = atoi(pt.get<std::string>("QUEUE.COOPvsAIDifficulty").c_str());
 
+    DESPERATE_TOLERANCE = atof(pt.get<std::string>("TOLERANCE.DesperateTolerance").c_str());
     GOOD_TOLERANCE = atof(pt.get<std::string>("TOLERANCE.GoodTolerance").c_str());
     STRICT_TOLERANCE = atof(pt.get<std::string>("TOLERANCE.StrictTolerance").c_str());
     VERY_STRICT_TOLERANCE = atof(pt.get<std::string>("TOLERANCE.VeryStrictTolerance").c_str());
@@ -1743,12 +1950,13 @@ void readSettings(void) {
 
     //Error Checking configuration file
     if (champNameString == "" || !(Type >= 1 && Type <= 3) ||
-      (Type == 1 && (Difficulty != 1 && Difficulty != 2))) {
+      (Type == 1 && (COOPvsAIDifficulty != 1 && COOPvsAIDifficulty != 2))) {
 
       errorMsg = "Configuration file is missing required entries or has invalid values.";
       errorCode = ERR_CONF_INVALID;
     }
     else if (
+      (DESPERATE_TOLERANCE < 0.01 || DESPERATE_TOLERANCE > 1.0) ||
       (GOOD_TOLERANCE < 0.01 || GOOD_TOLERANCE > 1.0) ||
       (STRICT_TOLERANCE < 0.01 || STRICT_TOLERANCE > 0.1) ||
       (VERY_STRICT_TOLERANCE >= STRICT_TOLERANCE || VERY_STRICT_TOLERANCE < 0.001 || VERY_STRICT_TOLERANCE > 0.05))

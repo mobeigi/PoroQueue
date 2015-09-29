@@ -106,6 +106,7 @@
 #define STAGE_ARAM "aram"
 #define STAGE_HOWLING_ABYSSS "howling_abyss"
 #define STAGE_NORMAL_ALL_RANDOM "normal_all_random"
+#define STAGE_ARAM_REROLL "reroll"
 
 //Tip definitions
 #define TIP_DODGING "Dodging queue, champ taken."
