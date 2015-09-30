@@ -1910,6 +1910,12 @@ void readSettings(void) {
         }
       }
 
+      //Check default LoL installation path
+      if (!isFound && is_directory("C:\\Riot Games\\League of Legends")) {
+        PathToLoLFolder = "C:\\Riot Games\\League of Legends";
+        PathToLoLFolderFound = true;
+      }
+
     }
     else if (is_directory(PathToLoLFolder)) { //Dont show error if folder exists
       PathToLoLFolderFound = true;
