@@ -2,7 +2,7 @@
 * Name: PoroQueue
 * Description: Auto Queue tool for popular league of legends game.
 * Author: Mohammad Ghasembeigi
-* Email: webmaster@mohammadg.com
+* Email: me@mohammadg.com
 */
 
 //OpenCV
