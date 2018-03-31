@@ -19,7 +19,7 @@
 #define LOG_FOLDER "LOG FILES"
 
 #define SETTINGS_FILE "settings.ini"
-#define DONATE_URL "http://www.hackavistic.com/goto.php?t=donate&src=onesautoqueue"
+#define DONATE_URL ""
 
 //Client
 #define LOL_VER_REGEX "\\d\\.\\d\\.\\d\\.\\d\\d$"
