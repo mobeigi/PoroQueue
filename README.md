@@ -1,9 +1,11 @@
 PoroQueue
 =========
 
-Automated queue program for League of Legends game written using Boost and OpenCV for image recognition. 
-Originally written in C, then 'somewhat' ported to C++.
-This was created and maintained over a few years up until mid-2014. It no longer works.  
+Automated queue program for League of Legends game written using Boost and OpenCV for image recognition.  
+Originally written in C, then 'somewhat' ported to C++.  
+This was created and maintained over a few years up until mid-2014.  
+It no longer works.  
+
 Total unique users: **~40888**
 
 Images
